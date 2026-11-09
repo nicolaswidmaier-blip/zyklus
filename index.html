@@ -351,13 +351,14 @@ function vEintragen(){
   const groups=cats.map(c=>`<div class="stack-s"><div class="label">${c.label}</div><div class="chips">${c.opts.map(o=>`<button class="chip" data-cat="${c.id}" data-opt="${esc(o)}" aria-pressed="${(e.tags?.[c.id]||[]).includes(o)}">${esc(o)}</button>`).join('')}</div></div>`).join('');
   return `<div class="stack">
   <div class="date-nav"><button class="icon-btn" data-td="-1" aria-label="Vorheriger Tag">‹</button>
-   <div style="text-align:center"><h1 style="font-size:1.35rem">${k===todayKey()?'Heute':fmt(k,{weekday:'long'})}</h1><div class="muted">${fmt(k,{day:'numeric',month:'long',year:'numeric'})}${inf?` · Zyklustag ${inf.cd}`:''}</div></div>
+   <div style="text-align:center"><h1 style="font-size:1.35rem">${k===todayKey()?'Heute':fmt(k,{weekday:'long'})}</h1><div class="muted">${inf?`Zyklustag ${inf.cd}`:''}</div><input type="date" id="pickdate" aria-label="Datum wählen" value="${k}" max="${todayKey()}" style="margin-top:6px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 10px"></div>
    <button class="icon-btn" data-td="1" aria-label="Nächster Tag" ${isFuture?'disabled':''}>›</button></div>
   ${isFuture?'<p class="muted">Dieser Tag liegt in der Zukunft.</p>':''}
-  <div class="stack-s"><div class="label">Blutung</div><div class="chips flow">${flow}</div></div>
+  <p class="muted" style="font-size:.9rem">Tippe an, was an diesem Tag zutrifft. Alles wird sofort gespeichert. Kein Eintrag nötig, wenn nichts zutrifft.</p>
+  <div class="stack-s"><div class="label">Blutung an diesem Tag</div><div class="chips flow">${flow}</div></div>
   ${groups}
   <div class="stack-s"><label class="label" for="note">Notiz</label><textarea id="note" placeholder="Was war heute anders?">${esc(e.note||'')}</textarea></div>
-  <div class="saved" id="saved"></div>
+  <div class="row"><button class="btn primary" data-act="done">Speichern und fertig</button><span class="saved" id="saved"></span></div>
   </div>`;
 }
 function entry(k){if(!S.days[k])S.days[k]={tags:{}};S.days[k].tags=S.days[k].tags||{};return S.days[k]}
@@ -446,7 +447,8 @@ document.addEventListener('click',ev=>{
     if(a.length)e.tags[d.cat]=a;else delete e.tags[d.cat];tidy(trackDate);save();render();flash();return}
   if(d.themeSet){S.settings.theme=d.themeSet;save();render();return}
   const act=d.act;
-  if(act==='track-today'){trackDate=todayKey();go('eintragen')}
+  if(act==='done'){save();go('home')}
+  else if(act==='track-today'){trackDate=todayKey();go('eintragen')}
   else if(act==='period-today'){const e=entry(todayKey());e.flow='mittel';save();trackDate=todayKey();go('eintragen')}
   else if(act==='clear-demo'){S={settings:{...S.settings},days:{},demo:false};save();render()}
   else if(act==='export'){const txt=JSON.stringify({app:'zyklustagebuch',v:1,...S});const io=document.getElementById('io');io.value=txt;
@@ -459,6 +461,7 @@ document.addEventListener('click',ev=>{
 });
 document.addEventListener('input',ev=>{
   const t=ev.target;
+  if(t.id==='pickdate'){if(t.value&&t.value<=todayKey()){trackDate=t.value;render()}return}
   if(t.id==='note'){const e=entry(trackDate);e.note=t.value;tidy(trackDate);save();flash()}
   if(t.id==='cl'){const v=+t.value;if(v>=15&&v<=60){S.settings.cycleLen=v;save()}}
   if(t.id==='pl'){const v=+t.value;if(v>=1&&v<=12){S.settings.periodLen=v;save()}}
